@@ -94,12 +94,12 @@ DONE_EXTRACT_NDK=${GLOBAL_DONE_DIR}/02.extract-ndk
 DONE_EXTRACT_CMAKE=${GLOBAL_DONE_DIR}/03.extract-cmake
 DONE_EXTRACT_CMDLINE_TOOLS=${GLOBAL_DONE_DIR}/04.extract-cmdline-tools
 DONE_DOWNLOAD_ANDROID_SDK=${GLOBAL_DONE_DIR}/05.download-android-sdk
-DONE_GENERATE_KEYS=${GLOBAL_DONE_DIR}/06.generate-keys
-DONE_UPDATE_LOCAL_PROPERTIES=${GLOBAL_DONE_DIR}/07.update-local-properties
-DONE_BUILD_CIV_RELEASE=${GLOBAL_DONE_DIR}/08.build-civ-release
 
 DONE_CLONE_ATAK_REPOSITORY=${BUILD_DONE_DIR}/01.clone-atak-repository
 DONE_PREBUILD=${BUILD_DONE_DIR}/02.prebuild
+DONE_GENERATE_KEYS=${BUILD_DONE_DIR}/03.generate-keys
+DONE_UPDATE_LOCAL_PROPERTIES=${BUILD_DONE_DIR}/04.update-local-properties
+DONE_BUILD_CIV_RELEASE=${BUILD_DONE_DIR}/05.build-civ-release
 
 PATH=${PATH}:${CMAKE_DIR}/bin
 
@@ -320,17 +320,17 @@ buildscript {
 }
 EOL
 
-    # Do NOT stop on Error
+    # Do NOT stop on Error, as we expect the first build to fail
     set +e
 
     ./gradlew generateJniHeaders assembleCivRelease
 
     #
-    # Note that I'm not currently sure if any of the below is required!
+    # The build will fail the first time looking for the Khronos library, so re-export it to conan,
+    # which seems to fix the problem.
     #
     pushd ../scripts
 
-    # Khronos
     cp khronos-conanfile.py ../khronos/conanfile.py
     pushd ../khronos
     conan export-pkg . -f
@@ -338,7 +338,7 @@ EOL
 
     popd
 
-    # Now stop on Error
+    # Now stop on Error, as if this fails we want to know about it
     set -e
 
     ./gradlew assembleCivRelease
